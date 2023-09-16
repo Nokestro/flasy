@@ -1,0 +1,85 @@
+
+                                                /*Задаем цвета в переменные*/
+:root {
+--color1:orange;
+--color2:blue;
+}
+                                                    /*Основа сайта*/
+html, body {
+    height: 100%;
+}
+
+.wrapper {
+ height:100%;
+ max-width: 100%;
+ margin: 0 auto;
+}
+
+                                               /*Фон сайта (header и footer)*/
+header, footer{
+    background: var(--color1);
+    background: -moz-linear-gradient(left, var(--color1) 0%, var(--color2) 100%);
+    background: -webkit-linear-gradient(left, var(--color1) 0%, var(--color2) 100%);
+    background: linear-gradient(to right, var(--color1) 0%, var(--color2) 100%);
+    background-size: contain;
+}
+
+header {
+    padding: 10px;
+    height:50px;
+
+}
+
+header li.last {
+    display: inline-block;
+    float: right;
+}
+
+header a{
+    margin-left: 20px;
+    font-size: 18px;
+    text-decoration: none;
+    color: white;
+    transition: 0.2s;
+}
+
+header a:hover{
+    color: black;
+}
+
+                                            /*Блок contact*/
+.content {
+    min-height: 100%;
+    padding-bottom: 90px;
+    box-sizing: border-box;
+    margin: 10px;
+}
+
+.form-contact label {
+         display: inline-block;
+         min-width: 80px;
+}
+
+.form-contact p {margin: 10px 0 10px 0;}
+.form-contact input[type=submit], textarea {
+         font-size: 16px;
+}
+
+.flash {padding: 10px;}
+.flash.success {
+         border: 1px solid #21DB56;
+         background: #AEFFC5;
+}
+.flash.error {
+         border: 1px solid #FF4343;
+         background: #FF9C9C;
+}
+
+
+footer {
+
+    height: 90px;
+    margin-top: -90px;
+    box-sizing: border-box;
+}
+
