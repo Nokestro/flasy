@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, session, redirect, url_for, g
+from flask import Flask, render_template, request, flash, session, redirect, url_for, g, abort
 import sqlite3
 import os
 
@@ -53,11 +53,10 @@ menu = [{"name":'catalog', "url":'catalog'},
 def index():
     db = get_db()
     dbase = FDataBase(db)
-    return render_template("kitty/index.html", menu=dbase.getMenu(), title = 'home')
+    return render_template("kitty/index.html", menu=dbase.getMenu(), title = 'home', posts=dbase.getPostsAnonce())
 
 @app.route("/contact", methods=["POST", "GET"])
 def contact():
-
 
     if request.method == 'POST':
         if len(request.form['username']) > 2:
@@ -80,14 +79,38 @@ def login():
         return redirect(url_for('profile', username=session['userLogged']))
 
     return  render_template('kitty/login.html', title = "Auth", menu=menu)
+
+@app.route('/add_posts', methods = ['POST', 'GET'])
+def addPosts():
+    db = get_db()
+    dbase = FDataBase(db)
+
+    if request.method == "POST":
+        if len(request.form['title']) > 2 and len(request.form['text']) > 10:
+            res = dbase.addPosts(request.form['title'], request.form['text'])
+            if not res:
+                flash('Ошибка добавления статьи', category='error')
+            else:
+                flash('Статья добавлена', category='success')
+        else:
+            flash('Ошибка добавления статьи', category='error')
+    return render_template('kitty/add_posts.html', menu=dbase.getMenu(), title='Добавление статьи')
+
+@app.route('/post/<int:id_post>')
+def showPost(id_post):
+    db = get_db()
+    dbase = FDataBase(db)
+    title, post = dbase.getPost(id_post)
+    if not title:
+        abort(404)
+    return render_template('kitty/post.html', menu=dbase.getMenu(), title=title, post=post)
+
+
+# Обработчик ошибок
+
 @app.errorhandler(404)
 def pageNotFound(error):
     return render_template('page404.html', title='Страница не найдена', menu=menu)
-
-
-@app.route('/add_posts', methods = ['POST', 'GET'])
-def add_posts():
-
 
 
 if __name__ == "__main__":
