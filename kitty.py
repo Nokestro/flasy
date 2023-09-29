@@ -105,21 +105,31 @@ def showPost(alias):
         abort(404)
     return render_template('kitty/post.html', menu=dbase.getMenu(), title=title, post=post)
 
-@app.route('login')
-def login():
+@app.route('/acclogin')
+def acclogin():
     log = ''
     if request.cookies.get('logged'):
         log = request.cookies.get('logged')
 
-    res = make_response(f"<h1>Форма авторизации</h1><p>logged: {log}</p>)
+    res = make_response(f"<h1>Форма авторизации</h1><p>logged: {log}</p>")
     res.set_cookie("logged", "yes", 30*24*3600)
     return res
 
-@app.route('logout')
-def logout():
-    res = make_response(f"<p>Вы больше не авторезированы</p>)
+@app.route('/acclogout')
+def acclogout():
+    res = make_response(f"<p>Вы больше не авторезированы</p>")
     res.set_cookie("logged", "", 0)
     return res
+
+
+@app.route('/visit')
+def visit():
+    if 'visits' in session:
+        session['visits'] = session.get('visits')+1
+    else:
+        session['visits'] = 1
+    return f"<p>Число просмотров = {session['visits']}</p>"
+
 
 # Обработчик ошибок
 
