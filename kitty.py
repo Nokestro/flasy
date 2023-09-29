@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, session, redirect, url_for, g, abort
+from flask import Flask, render_template, request, flash, session, redirect, url_for, g, abort, make_response
 import sqlite3
 import os
 
@@ -105,6 +105,21 @@ def showPost(alias):
         abort(404)
     return render_template('kitty/post.html', menu=dbase.getMenu(), title=title, post=post)
 
+@app.route('login')
+def login():
+    log = ''
+    if request.cookies.get('logged'):
+        log = request.cookies.get('logged')
+
+    res = make_response(f"<h1>Форма авторизации</h1><p>logged: {log}</p>)
+    res.set_cookie("logged", "yes", 30*24*3600)
+    return res
+
+@app.route('logout')
+def logout():
+    res = make_response(f"<p>Вы больше не авторезированы</p>)
+    res.set_cookie("logged", "", 0)
+    return res
 
 # Обработчик ошибок
 
