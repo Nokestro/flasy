@@ -2,6 +2,10 @@ from flask import Flask, render_template, request, flash, session, redirect, url
 import sqlite3
 import os
 
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask_login import LoginManager,  login_user, login_required
+from UserLogin import UserLogin
 from Fdatabase import FDataBase
 
 # Конфигурация
@@ -10,12 +14,18 @@ SECRET_KEY = 'fasko234k2podsa3r233ew'
 DEBUG = True
 
 
-
-
 app = Flask(__name__)
 app.config.from_object(__name__)
 
 app.config.update(dict(DATABASE=os.path.join(app.root_path, 'flsite.db')))
+
+login_manager = LoginManager(app)
+
+@login_manager.user_loader
+def load_user(user_id):
+    print('load_user')
+    return UserLogin().fromDB(user_id, dbase)
+
 
 # База данных
 
@@ -37,9 +47,20 @@ def get_db():
         g.link_db = connect_db()
     return g.link_db
 
+dbase = None
+@app.before_request
+def before_request():
+    """Установка соединения с БД перед запросом"""
+    global dbase
+    db = get_db()
+    dbase = FDataBase(db)
 
 
-
+@app.teardown_appcontext
+def close_db(error):
+    """Закрываем соединение с БД"""
+    if hasattr(g, 'link_db'):
+        g.link_db.close()
 
 
 menu = [{"name":'catalog', "url":'catalog'},
@@ -51,8 +72,6 @@ menu = [{"name":'catalog', "url":'catalog'},
 @app.route("/index")
 @app.route("/")
 def index():
-    db = get_db()
-    dbase = FDataBase(db)
     return render_template("kitty/index.html", menu=dbase.getMenu(), title = 'home', posts=dbase.getPostsAnonce())
 
 @app.route("/contact", methods=["POST", "GET"])
@@ -80,10 +99,37 @@ def login():
 
     return  render_template('kitty/login.html', title = "Auth", menu=menu)
 
+@app.route('/log', methods=["POST", "GET"])
+def log():
+    if request.method = "POST":
+        user = dbase.getUserByEmail(request.form['email'])
+        if user and check_password_hash(user['psw'], request.form['psw']):
+            userlogin = UserLogin().create(user)
+            login_user(userlogin)
+            return redirect('kitty/index.html')
+        flash('Невераня пара пароль/логин', 'error')
+
+    return render_template('kitty/log.html', title='Логин', menu=dbase.getMenu())
+@app.route('/register', methods=["POST", "GET"])
+def register():
+    if request.method == "POST":
+        session.pop('_flashes', None)
+        if len(request.form['name']) > 4 and len(request.form['email']) > 4 \
+            and len(request.form['psw']) > 4 and request.form['psw'] == request.form['psw2']:
+            hash = generate_password_hash(request.form['psw'])
+            res = dbase.addUser(request.form['name'], request.form['email'], hash)
+            if res:
+                flash("Вы успешно зарегистрированы", "success")
+                return redirect(url_for('log'))
+            else:
+                flash("Ошибка при добавлении в БД", "error")
+        else:
+            flash("Неверно заполнены поля", "error")
+    return render_template('kitty/register.html', title='Логин', menu=dbase.getMenu())
+
+
 @app.route('/add_posts', methods = ['POST', 'GET'])
 def addPosts():
-    db = get_db()
-    dbase = FDataBase(db)
 
     if request.method == "POST":
         if len(request.form['title']) > 2 and len(request.form['text']) > 10:
@@ -97,9 +143,8 @@ def addPosts():
     return render_template('kitty/add_posts.html', menu=dbase.getMenu(), title='Добавление статьи')
 
 @app.route('/post/<alias>')
+@login_required
 def showPost(alias):
-    db = get_db()
-    dbase = FDataBase(db)
     title, post = dbase.getPost(alias)
     if not title:
         abort(404)
